@@ -13,9 +13,9 @@ function Composer() {
 export default definePluginApp((app) => {
   app.slots.experimental_composer({
     id: "composer",
-    title: "Composer",
+    title: "Composer (animated waveform)",
     description:
-      "bb's composer: rich text, @-mentions, slash commands, voice and attachments.",
+      "bb's composer with a voice waveform that animates even when the OS asks for reduced motion.",
     component: Composer,
   });
 });

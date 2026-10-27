@@ -1,5 +1,5 @@
 {
-  "name": "bb-plugin-bb--composer",
+  "name": "bb-plugin-composer-waveform",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "bbPluginSdk": ">=0.6.77"
   },
   "bb": {
-    "name": "Composer",
+    "name": "Composer (animated waveform)",
     "description": "bb's composer: the prompt box with rich text, @-mentions, slash commands, voice and attachments.",
     "branding": {
       "icon": "MessageSquare"
