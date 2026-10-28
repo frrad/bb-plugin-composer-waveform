@@ -1,19 +1,48 @@
-const voiceInputStarters = new Map<string, () => void>();
+interface VoiceInputCommandHandler {
+  state: "idle" | "recording" | "transcribing" | "error";
+  start(): void;
+  stop(): void;
+}
 
-export function registerVoiceInputStarter(
+const voiceInputHandlers = new Map<string, VoiceInputCommandHandler>();
+
+export function registerVoiceInputHandler(
   composerKey: string,
-  start: () => void,
+  handler: VoiceInputCommandHandler,
 ): () => void {
-  const previous = voiceInputStarters.get(composerKey);
-  voiceInputStarters.set(composerKey, start);
+  const previous = voiceInputHandlers.get(composerKey);
+  voiceInputHandlers.set(composerKey, handler);
 
   return () => {
-    if (voiceInputStarters.get(composerKey) !== start) return;
-    if (previous === undefined) voiceInputStarters.delete(composerKey);
-    else voiceInputStarters.set(composerKey, previous);
+    if (voiceInputHandlers.get(composerKey) !== handler) return;
+    if (previous === undefined) voiceInputHandlers.delete(composerKey);
+    else voiceInputHandlers.set(composerKey, previous);
   };
 }
 
 export function runVoiceInputCommand(composerKey: string): void {
-  voiceInputStarters.get(composerKey)?.();
+  const handler = voiceInputHandlers.get(composerKey);
+  if (handler?.state === "recording") handler.stop();
+  else if (handler?.state === "idle" || handler?.state === "error") {
+    handler.start();
+  }
+}
+
+export function voiceInputKeyAction(
+  event: Pick<
+    KeyboardEvent,
+    "key" | "altKey" | "ctrlKey" | "metaKey" | "shiftKey"
+  >,
+): "cancel" | "send" | null {
+  if (event.key === "Escape") return "cancel";
+  if (
+    event.key === "Enter" &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.shiftKey
+  ) {
+    return "send";
+  }
+  return null;
 }

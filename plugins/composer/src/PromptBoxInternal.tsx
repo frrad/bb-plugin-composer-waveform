@@ -23,7 +23,10 @@ import {
   type ExperimentalComposerPromptAction as PromptBoxAction,
 } from "@get-bb/plugin-sdk/app";
 import { VoiceRecordingBar } from "./VoiceRecordingBar";
-import { registerVoiceInputStarter } from "./voice-input-command";
+import {
+  registerVoiceInputHandler,
+  voiceInputKeyAction,
+} from "./voice-input-command";
 import type { Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
 import { CommandManager } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
@@ -2899,9 +2902,13 @@ export function PromptBoxInternal({
     void voice?.start();
   }, [isPointerCoarse, voice]);
   useEffect(() => {
-    if (!canStartVoiceInput) return;
-    return registerVoiceInputStarter(composer.key, startVoiceInput);
-  }, [canStartVoiceInput, composer.key, startVoiceInput]);
+    if (!canStartVoiceInput || voice === undefined) return;
+    return registerVoiceInputHandler(composer.key, {
+      state: voice.state,
+      start: startVoiceInput,
+      stop: voice.stop,
+    });
+  }, [canStartVoiceInput, composer.key, startVoiceInput, voice]);
   const cancelVoiceInput = useCallback(() => {
     if (voiceActionRevealFrameRef.current !== null) {
       window.cancelAnimationFrame(voiceActionRevealFrameRef.current);
@@ -3265,10 +3272,13 @@ export function PromptBoxInternal({
   useEffect(() => {
     if (!showVoiceActionGroup || !voice) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
+      const action = voiceInputKeyAction(event);
+      if (action === null || (action === "send" && voice.state !== "recording"))
+        return;
       event.preventDefault();
       event.stopPropagation();
-      cancelVoiceInput();
+      if (action === "cancel") cancelVoiceInput();
+      else voice.send();
     };
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);

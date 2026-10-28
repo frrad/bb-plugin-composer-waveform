@@ -21,8 +21,9 @@ All in `plugins/composer`:
 - `src/PromptBoxInternal.tsx` renders that local `VoiceRecordingBar` instead
   of the SDK's `experimental_VoiceRecordingBar` and connects the voice-input
   command to the active composer.
-- `app.tsx` registers **Start voice input**, a rebindable Composer command
-  whose default shortcut is Mod+D.
+- `app.tsx` registers **Toggle voice input**, a rebindable Composer command
+  whose default shortcut is Mod+D. Press it again to transcribe into the
+  draft; Enter while recording transcribes and sends.
 - `package.json` and `app.tsx` rename the plugin to `composer-waveform`,
   "Composer (animated waveform)", because bundled plugin ids are reserved.
 

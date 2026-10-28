@@ -14,7 +14,7 @@ function Composer() {
 export default definePluginApp((app) => {
   app.composer.experimental_registerCommand({
     id: "start-voice-input",
-    title: "Start voice input",
+    title: "Toggle voice input",
     defaultShortcut: { key: "d", mod: true },
     run: ({ composer }) => runVoiceInputCommand(composer.key),
   });
