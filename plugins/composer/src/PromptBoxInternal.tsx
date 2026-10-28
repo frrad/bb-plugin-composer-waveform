@@ -23,6 +23,7 @@ import {
   type ExperimentalComposerPromptAction as PromptBoxAction,
 } from "@get-bb/plugin-sdk/app";
 import { VoiceRecordingBar } from "./VoiceRecordingBar";
+import { registerVoiceInputStarter } from "./voice-input-command";
 import type { Node as ProseMirrorNode, Slice } from "@tiptap/pm/model";
 import { CommandManager } from "@tiptap/core";
 import { closeHistory } from "@tiptap/pm/history";
@@ -2897,6 +2898,10 @@ export function PromptBoxInternal({
     }
     void voice?.start();
   }, [isPointerCoarse, voice]);
+  useEffect(() => {
+    if (!canStartVoiceInput) return;
+    return registerVoiceInputStarter(composer.key, startVoiceInput);
+  }, [canStartVoiceInput, composer.key, startVoiceInput]);
   const cancelVoiceInput = useCallback(() => {
     if (voiceActionRevealFrameRef.current !== null) {
       window.cancelAnimationFrame(voiceActionRevealFrameRef.current);

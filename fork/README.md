@@ -1,8 +1,8 @@
 # bb-plugin-composer-waveform
 
-A fork of [get-bb/bb](https://github.com/get-bb/bb) that carries one commit on
-top of a bb release: a copy of bb's bundled Composer plugin whose voice
-waveform animates even when the OS asks for reduced motion.
+A fork of [get-bb/bb](https://github.com/get-bb/bb) that carries Composer
+customizations on top of a bb release: a voice waveform that animates even
+when the OS asks for reduced motion, and a rebindable voice-input shortcut.
 
 ## Why
 
@@ -11,7 +11,7 @@ bb's voice recording bar draws a flat line instead of a live waveform when
 "Remove animations" is on, that leaves no sign that the mic is hearing
 anything. Everything else keeps honoring reduced motion.
 
-## What the commit changes
+## What the fork changes
 
 All in `plugins/composer`:
 
@@ -19,7 +19,10 @@ All in `plugins/composer`:
   the host components in `apps/app/src/components/promptbox`, with the
   reduced-motion check removed from the waveform.
 - `src/PromptBoxInternal.tsx` renders that local `VoiceRecordingBar` instead
-  of the SDK's `experimental_VoiceRecordingBar`.
+  of the SDK's `experimental_VoiceRecordingBar` and connects the voice-input
+  command to the active composer.
+- `app.tsx` registers **Start voice input**, a rebindable Composer command
+  whose default shortcut is Mod+D.
 - `package.json` and `app.tsx` rename the plugin to `composer-waveform`,
   "Composer (animated waveform)", because bundled plugin ids are reserved.
 
