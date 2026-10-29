@@ -10,6 +10,7 @@ import {
   useComposer,
   experimental_readPromptMentionClipboard as readPromptMentionClipboard,
   experimental_VoiceInputButton as VoiceInputButton,
+  experimental_VoiceRecordingBar as VoiceRecordingBar,
   type ComposerAttachment,
   type ComposerDraft,
   type ComposerDraftSnapshot,
@@ -22,7 +23,6 @@ import {
   type ExperimentalDroppedThreadMention,
   type ExperimentalComposerPromptAction as PromptBoxAction,
 } from "@get-bb/plugin-sdk/app";
-import { VoiceRecordingBar } from "./VoiceRecordingBar";
 import {
   registerVoiceInputHandler,
   voiceInputKeyAction,

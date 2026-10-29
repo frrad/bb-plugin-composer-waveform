@@ -20,9 +20,9 @@ export default definePluginApp((app) => {
   });
   app.slots.experimental_composer({
     id: "composer",
-    title: "Composer (animated waveform)",
+    title: "Composer (voice shortcut)",
     description:
-      "bb's composer with an animated voice waveform and a rebindable voice-input shortcut.",
+      "bb's composer with a rebindable voice-input shortcut: Mod+D toggles recording, Enter while recording transcribes and sends.",
     component: Composer,
   });
 });

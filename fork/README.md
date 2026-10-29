@@ -1,31 +1,31 @@
 # bb-plugin-composer-waveform
 
-A fork of [get-bb/bb](https://github.com/get-bb/bb) that carries Composer
-customizations on top of a bb release: a voice waveform that animates even
-when the OS asks for reduced motion, and a rebindable voice-input shortcut.
+A fork of [get-bb/bb](https://github.com/get-bb/bb) that adds a rebindable
+voice-input keyboard shortcut to bb's Composer.
 
 ## Why
 
-bb's voice recording bar draws a flat line instead of a live waveform when
-`prefers-reduced-motion: reduce` is set. On an Android e-ink phone, where
-"Remove animations" is on, that leaves no sign that the mic is hearing
-anything. Everything else keeps honoring reduced motion.
+bb's composer only starts voice input from the mic button. This fork adds a
+keyboard command so you can dictate without reaching for the mouse, and send
+the transcript with Enter.
+
+(The fork used to also carry a waveform that animated under reduced motion.
+bb 0.48.0 ships that upstream (get-bb/bb#6398), so the fork dropped it.)
 
 ## What the fork changes
 
 All in `plugins/composer`:
 
-- `src/VoiceRecordingBar.tsx` and `src/WaveformVisualizer.tsx` are copies of
-  the host components in `apps/app/src/components/promptbox`, with the
-  reduced-motion check removed from the waveform.
-- `src/PromptBoxInternal.tsx` renders that local `VoiceRecordingBar` instead
-  of the SDK's `experimental_VoiceRecordingBar` and connects the voice-input
-  command to the active composer.
 - `app.tsx` registers **Toggle voice input**, a rebindable Composer command
   whose default shortcut is Mod+D. Press it again to transcribe into the
   draft; Enter while recording transcribes and sends.
+- `src/voice-input-command.ts` routes the command to the active composer.
+- `src/PromptBoxInternal.tsx` connects that command to the composer's voice
+  input and handles Enter while recording.
 - `package.json` and `app.tsx` rename the plugin to `composer-waveform`,
-  "Composer (animated waveform)", because bundled plugin ids are reserved.
+  "Composer (voice shortcut)", because bundled plugin ids are reserved. The
+  id keeps its old name so keybinding overrides like
+  `plugin:composer-waveform/start-voice-input` keep working.
 
 A composer you install wins over the bundled one under Settings → Appearance →
 Composer → Automatic. Pick "Composer" there to go back to bb's own.

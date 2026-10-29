@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "bb's composer with an animated voice waveform and a rebindable voice-input shortcut.",
+  "description": "bb's composer with a rebindable voice-input shortcut: Mod+D toggles recording, Enter while recording transcribes and sends.",
   "engines": {
     "bb": ">=0.0",
     "bbPluginSdk": ">=0.6.77"
   },
   "bb": {
-    "name": "Composer (animated waveform)",
-    "description": "bb's composer with an animated voice waveform and a rebindable voice-input shortcut.",
+    "name": "Composer (voice shortcut)",
+    "description": "bb's composer with a rebindable voice-input shortcut: Mod+D toggles recording, Enter while recording transcribes and sends.",
     "branding": {
       "icon": "MessageSquare"
     },
