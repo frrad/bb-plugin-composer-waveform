@@ -33,22 +33,38 @@ Composer → Automatic. Pick "Composer" there to go back to bb's own.
 ## Install
 
 ```sh
-git clone -b composer-waveform git@github.com:frrad/bb-plugin-composer-waveform.git
-cd bb-plugin-composer-waveform
-git remote add upstream https://github.com/get-bb/bb.git
-NO_PUSH=1 fork/rebuild.sh
-bb plugin install path:"$PWD/plugins/composer"
+bb plugin install git:https://github.com/frrad/bb-plugin-composer-waveform.git@main --subdirectory plugins/composer --yes
 ```
 
-## After every bb update
+The install builds from published npm dependencies and the UI source vendored
+from bb's component registry. It needs no local bb checkout or pnpm workspace.
+The package currently targets bb 0.48.x.
 
-The fork is built for one bb release, so rebuild it whenever bb updates:
+If migrating from a folder install, back up its settings and secrets first,
+then remove it with `bb plugin remove composer-waveform` and run the command
+above. Its plugin id and keyboard command id stay the same.
+
+Update after a compatible change lands on `main`:
 
 ```sh
+bb plugin update composer-waveform --yes
+```
+
+## Development and bb updates
+
+```sh
+git clone https://github.com/frrad/bb-plugin-composer-waveform.git
+cd bb-plugin-composer-waveform
 fork/rebuild.sh
 ```
 
-It rebases the commit onto `desktop-v$(bb --version)`, installs the
-composer's dependencies, builds `plugins/composer/dist`, reloads the plugin,
-and force-pushes the `composer-waveform` branch. If the rebase conflicts it
-aborts and leaves the branch as it was.
+`fork/rebuild.sh` refreshes the plugin's vendored UI from this fork's registry,
+installs its npm dependencies, and builds the plugin. It does not change Git
+history or reload the installed Git source. Commit changes through a PR to
+`main`, then update the installed plugin with the command above.
+
+When updating to another bb release, update the fork's composer and registry
+sources together, run the rebuild and composer checks, and adjust the package's
+bb compatibility range after verifying it against that release. The legacy
+`composer-waveform` branch retains the earlier rebasing workflow; Git installs
+track `main`.

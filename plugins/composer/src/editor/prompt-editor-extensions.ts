@@ -1,5 +1,5 @@
 import { Placeholder } from "@tiptap/extensions/placeholder";
-import Blockquote from "@tiptap/extension-blockquote";
+import Blockquote from "../../vendor/blockquote";
 import Document from "@tiptap/extension-document";
 import HardBreak from "@tiptap/extension-hard-break";
 import Paragraph from "@tiptap/extension-paragraph";
