@@ -39,9 +39,17 @@ bundled roots; `NODE_EXTRA_CA_CERTS` still adds a PEM bundle. Set
 `NODE_USE_SYSTEM_CA=0` or `NODE_USE_ENV_PROXY=0` before launch to opt out.
 
 Set `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` (or their lowercase forms) in the
-launch environment or with `bb-app env set`. Include `localhost,127.0.0.1,::1`
-in `NO_PROXY` to keep local bb connections direct. Restart bb after changing
-these settings; existing sockets and workers keep their startup configuration.
+launch environment or with `bb-app env set`. Proxy URLs need an `http://` or
+`https://` scheme: when any `HTTP_PROXY`/`HTTPS_PROXY` variable (either case)
+lacks one, such as `proxy.corp:3128`, bb starts that Node process without
+`--use-env-proxy` and prints a `BB_INVALID_PROXY_ENV` warning instead of letting
+Node fail at startup. bb checks this against each process's final environment,
+including forked and provider bridge workers that inherit the flag. When a
+process keeps `--use-env-proxy` with a proxy set, bb appends
+`localhost,127.0.0.1,::1,[::1]` to its existing `NO_PROXY`/`no_proxy` values
+(a `*` entry is left as is), so local bb connections stay direct; that process's
+children inherit those entries. Restart bb after changing these settings;
+existing sockets and workers keep their startup configuration.
 
 Built-in proxy support requires Node 22.21+ or 24.5+ (or Node 26); on older
 supported Node releases the launcher omits `--use-env-proxy`. Libraries that create their own agents
@@ -268,7 +276,6 @@ for the command surface.
 | `showDiagnosticEvents`                                                     | `false` in all builds               | Settings → General → Privacy & diagnostics → Show diagnostic events. Shows provider environment resolution and raw provider events bb does not yet understand in the timeline. Warnings, errors, and model fallback stay visible. Hidden diagnostics do not count toward timeline event or byte limits.                                                                                                                                                                                                                                        |
 | `steerActiveThreadOnEnter`                                                 | `true`                              | Settings → General → Default thread followup behavior, when no typeahead suggestion is active. `true` ("Steer"): Enter sends to the agent during its current run and Mod+Enter queues the message until the agent stops; `false` ("Queue") swaps them. Installs with saved settings or work from before the setting were migrated once to `false`.                                                                                                                                                                                             |
 | `confirmThreadArchive`                                                     | `true`                              | Settings → General → Thread archive confirmation. `false` archives a thread and its children in the app without a confirmation popup; the toast still offers Undo. CLI and SDK archives never prompt.                                                                                                                                                                                                                                                                                                                                          |
-| `showGitChanges`                                                           | `true`                              | Settings → General → Show Git changes and Commit button. `false` hides the untracked, uncommitted, and committed file summary and expanded file list above every thread composer, that shelf's pull-request status and actions, and the Commit action in the thread header and overflow menu. Thread relationships and workspace warnings stay visible.                                                                                                                                                                                        |
 | `keepHistoryAfterContextClear`                                             | `false`                             | Settings → General → Show messages from before a context clear. When `false`, a thread's timeline, conversation outline, and message lookup start at its latest `Context cleared` boundary; `true` keeps earlier messages, which load on scroll and appear in the outline and `bb thread log --message`. Clearing always starts a fresh provider conversation and resets the context meter.                                                                                                                                                    |
 | `summarizeShellCommands`                                                   | `true`                              | Settings → General → Summarize shell commands. `true` titles a shell command that runs `ls`, `find`, `grep`, `rg`, `cat`, `head`, `tail`, `nl`, or `sed -n` with a summary such as `Searched for X`, and the row does not expand. `false` titles every shell command row with its command (`Running …`, `Ran …`), expands it to the command and its output, and counts it as a command in step summaries. Native read and search tool rows keep their titles.                                                                                  |
 | `streamerMode`                                                             | `false`                             | Settings → General. Hides every `customModels` entry from the web and mobile pickers, `bb provider models`, and `sdk.providers.models`, for example before a screen share. Entries stay in `config.json`; a thread that names a hidden model still runs, and default model resolution keeps the full list, so a provider whose only models are custom still starts. A composer whose stored selection is hidden falls back to the provider default and records it on the next send; reselect the custom model after turning streamer mode off. |
@@ -292,8 +299,11 @@ On Linux browsers with native primary-selection support, middle-click focuses
 the terminal and pastes the primary selection independently of this setting.
 Unsupported browsers never substitute unrelated regular clipboard contents.
 
-Older clients that omit `showGitChanges`, `keepHistoryAfterContextClear`,
-`summarizeShellCommands`, or `earlyAdopter` preserve the saved value. For older SDK callers, the
+Older clients that omit `keepHistoryAfterContextClear`,
+`summarizeShellCommands`, or `earlyAdopter` preserve the saved value. The
+former Show Git changes and Commit button switch is now
+[plugin settings](#git-and-github-pr-status-plugins), and the general-settings
+API rejects an update that still sends `showGitChanges`. For older SDK callers, the
 general-settings API still accepts and returns `showUnhandledProviderEvents` as
 a deprecated alias of `showDiagnosticEvents`, and an existing value is
 preserved; when a read-modify-write payload contains conflicting values, the one
@@ -497,6 +507,7 @@ like the matching thread menu item.
 | Panel     | Reopen closed tab                            | `Mod+Shift+T`               | Desktop                  |
 | Workspace | Quick open file / toggle diff                | `Mod+P` / `Mod+D`           | All clients              |
 | Workspace | Open terminal                                | `Mod+Shift+Enter`           | All clients              |
+| Terminal  | Find in scrollback                           | `Cmd+F` / `Ctrl+Shift+F`    | Terminal focus           |
 | Workspace | Open in preferred app                        | `Mod+O`                     | All clients              |
 | Composer  | Focus composer                               | `Mod+Shift+C`               | All clients              |
 | Composer  | Toggle model picker                          | `Mod+Shift+M`               | All clients              |
@@ -853,7 +864,7 @@ The `earlyAdopter` general setting (the Become an early adopter banner on
 Settings → Experiments, `bb settings general earlyAdopter on`) switches the
 shipped default to the early adopter default: experiments marked Early adopter
 (currently `applicationLinks`, `timelinePush`, `compactExpiredCache`,
-`sidebarMultiSelect`, and `websocketCompression`) turn on, and the rest stay
+`sidebarMultiSelect`, `unreadDividerAtAnswer`, and `websocketCompression`) turn on, and the rest stay
 off. An experiment you set yourself keeps your value either way.
 `/system/config` and `sdk.system.config()` return the resolved values in
 `experiments`.
@@ -902,13 +913,18 @@ off. An experiment you set yourself keeps your value either way.
   them onto a composer as one mention per thread. Cmd/Ctrl-click still opens a
   thread in a split. Plugins read it with
   `experimental_useExperiment("sidebarMultiSelect")`.
+- `threadRowMetadata` adds Metadata to the built-in thread list's Organize →
+  Rows menu. With it checked (`showRowMetadata`), plugins draw details such as
+  GitHub PR Status's pull request number on a line under each thread title.
+  While the experiment is off the sidebar ignores `showRowMetadata`. Plugins
+  read it with `experimental_useExperiment("threadRowMetadata")`.
 - `timelinePush` makes an open thread view subscribe to its latest timeline
   window over the WebSocket (`thread-timeline` subscription target); the server
   pushes the full window once, then row deltas after new events, instead of the
   client refetching the latest window after every update. A missed push falls
   back to the delta request used when it is off. Open views follow a toggle
   live.
-- `unreadDividerAtAnswer` moves the NEW divider in an unread thread from the
+- `unreadDividerAtAnswer` (on for early adopters) moves the NEW divider in an unread thread from the
   first row after your read point to the answer of a turn that finished while
   you were away: the turn's final assistant message, or the error that ended
   it. The turn's tool calls and in-between notes stay above the divider. A
@@ -1103,6 +1119,33 @@ commands; background cleanup started from the page survives navigation and
 reconnects. See the
 [plugin skill](../plugins/storage-retention/skills/storage-retention/SKILL.md).
 
+### Git and GitHub PR Status plugins
+
+The builtin Git plugin's settings page has two switches:
+
+- `showGitChanges` (default `true`), Show Git changes above the composer.
+  `false` hides the untracked, uncommitted, and committed file summary,
+  expanded file list, and merge-base picker above every thread composer.
+- `showCommitButton` (default `false`), Show Commit button. `true` shows the
+  Commit action in the thread header and overflow menu when the workspace has
+  uncommitted changes.
+
+The builtin GitHub PR Status plugin's `showPullRequest` (default `true`) is
+Show pull request above the composer on its plugin page. `false` hides the pull
+request status, Mark ready and merge actions above every thread composer; the
+Info tab's Pull request row stays. Thread relationships and workspace warnings
+stay visible either way.
+
+```bash
+bb plugin config bb--git set showGitChanges false
+bb plugin config bb--git set showCommitButton true
+bb plugin config bb--github-pr-status set showPullRequest false
+```
+
+Upgrading copies the former Settings → General switch's saved value into
+`showGitChanges` and `showPullRequest`. The Commit button starts off for
+everyone.
+
 ### Ask User Question plugin
 
 The builtin Ask User Question plugin keeps an unanswered question card open for
@@ -1168,6 +1211,7 @@ row's Customize actions, or `bb thread-list prefs get|set|reset <key>`
 | `threadLifecycles`    | `["active"]`                      | `["active"]`, `["archived"]`, or both; empty and duplicate values are rejected                                                              |
 | `rowActions`          | `["bb--core/archive"]`            | Up to three thread action keys in display order; see below                                                                                  |
 | `showProviderIcons`   | `false`                           | Shows the provider icon before each thread title                                                                                            |
+| `showRowMetadata`     | `false`                           | Shows plugins' metadata on a line under each thread title; needs the `threadRowMetadata` experiment                                         |
 | `collapsed*`          | `[]`                              | Collapsed sections, projects, threads, environments, custom sections, and machines                                                          |
 
 `rowActions` keys are `bb--core/<id>` (`split`, `newThreadInEnvironment`,

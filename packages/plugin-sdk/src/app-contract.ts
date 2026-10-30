@@ -483,27 +483,6 @@ export interface PluginThreadListProps {
   searchQuery: string;
 }
 
-/**
- * Props passed to an `experimental_threadHeaderAction` component, rendered in
- * the thread header's action row.
- */
-export interface PluginThreadHeaderActionProps {
-  /**
-   * The thread this header belongs to. Never null: the slot is not rendered
-   * on the compose screen or other non-thread routes. A split layout renders
-   * one header per pane, so the component mounts once per visible thread,
-   * each with its own id — keep per-thread state in the component, never in a
-   * module-level singleton.
-   */
-  threadId: string;
-  projectId: string;
-  /**
-   * True on phone-width viewports and coarse pointers. Collapse to an
-   * icon-sized control when it is true — the row is short.
-   */
-  isCompactViewport: boolean;
-}
-
 /** JavaScript world a Browser page expression runs in. */
 export type ExperimentalPluginBrowserPageWorld = "isolated" | "main";
 
@@ -1728,27 +1707,64 @@ export interface PluginSidebarThreadActions {
 }
 
 /**
- * Render a plugin component in the thread header's action row.
- *
- * The frontend sibling of the backend `bb.ui.registerThreadAction`, which
- * renders a host-owned button and runs server-side. Use that one for "do a
- * thing"; use this one when the control must draw live state.
- *
- * The host places it at the left end of the action row, before the workspace
- * button, git actions, the panel toggle, maximize, and close. That row is a
- * 48px chrome row with 28px controls: render one inline control that fits, and
- * put anything taller in a portalled popover.
+ * Props passed to an `experimental_threadRowMetadata` component, rendered on a
+ * thread's row in a thread list: bb's sidebar and any list that draws
+ * {@link PluginSdkApp.experimental_ThreadRowMetadata}.
  */
-export interface PluginThreadHeaderActionRegistration {
+export interface ExperimentalThreadRowMetadataProps<Data = undefined> {
+  /** The row's thread, the same value the list renders. */
+  thread: PluginSidebarThread;
+  /** What `useData` last returned; undefined when the registration has none. */
+  data: Data;
+}
+
+/** What a row metadata registration's `useData` receives. */
+export interface ExperimentalThreadRowMetadataDataInput {
+  /**
+   * Every thread a list may draw a metadata line for: bb's active sidebar
+   * threads in sidebar order, then any other thread whose line is mounted
+   * (such as an archived row), deduplicated. Threads whose rows are not
+   * rendered, like a windowed list's rows off screen, are included: load
+   * them all in one batch so a row has its data, and its final height, when
+   * it renders.
+   */
+  threads: readonly PluginSidebarThread[];
+}
+
+/**
+ * A small item on a thread row's metadata line, under the title: a badge, not
+ * a control. Items share one line, left to right, and the line clips at the
+ * row's edge. bb's sidebar draws the line only while the `threadRowMetadata`
+ * experiment is on and the user turns on Organize → Rows → Metadata, and only
+ * on rows where an item shows something.
+ * Load the line's data in `useData`, a React hook bb calls once for the
+ * whole app while any list draws a metadata line, never per row; it
+ * receives every thread a list may show, so read them in one batch (for
+ * example one `experimental_useRpcKeyedQuery` over their keys). The
+ * component is then a pure render of its thread and `data`; with `useData`
+ * it first renders once `useData` has returned. A row that renders already
+ * has its data, so rows keep their height as they scroll into view.
+ * It hides the line while the row is renamed or customized and keeps it
+ * visible on hover. Render null to show nothing for a thread. Keep
+ * it to an icon and a few characters with a tooltip; clicks on it open the
+ * thread like the rest of the row. A crash removes only this item for that
+ * row.
+ */
+export interface ExperimentalThreadRowMetadataRegistration<Data = undefined> {
   /** Unique within the plugin; letters, digits, `-`, `_`. */
   id: string;
   /**
-   * Names the region the host wraps around your component (a labelled group).
-   * It does NOT label your control: an icon-only button still needs its own
-   * accessible name.
+   * Items sort by `order` (unset sorts last), then registration order. The
+   * first item starts the line.
    */
-  title: string;
-  component: ComponentType<PluginThreadHeaderActionProps>;
+  order?: number;
+  useData?(input: ExperimentalThreadRowMetadataDataInput): Data;
+  component: ComponentType<ExperimentalThreadRowMetadataProps<Data>>;
+}
+
+/** Props for {@link PluginSdkApp.experimental_ThreadRowMetadata}. */
+export interface ExperimentalThreadRowMetadataLineProps {
+  thread: PluginSidebarThread;
 }
 
 /**
@@ -1790,8 +1806,7 @@ export interface ExperimentalThreadContextSegmentInput {
   projectId: string;
   /**
    * The thread's environment, or null when the thread has no environment,
-   * its host is not active, the environment is not a usable checkout, or the
-   * user turned off "Show Git changes and Commit button".
+   * its host is not active, or the environment is not a usable checkout.
    */
   environment: ExperimentalThreadEnvironment | null;
 }
@@ -2031,7 +2046,8 @@ export interface PluginThreadActionDataInput {
   /**
    * Every thread a visible surface currently shows actions for (sidebar rows
    * on screen, the open thread's header, open menus); a hidden sidebar
-   * contributes none. Sorted, deduplicated, and published once the set has
+   * contributes none. A `"header"` action receives only the threads whose
+   * header is on screen. Sorted, deduplicated, and published once the set has
    * been quiet for 32 ms (at most 100 ms after the first change), so rows
    * that mount a frame apart arrive together. Load per-thread state for these
    * ids, fetching only ids not loaded yet.
@@ -2087,6 +2103,9 @@ export interface PluginThreadActionBulkItemInput<Data> {
  * derives the action for one thread from that thread and `data`, closing over
  * everything `run` needs, or returns null to hide it. A throw from either
  * drops only this registration.
+ *
+ * With `placement: "header"` the action is a button in the open thread's
+ * header instead (see {@link PluginThreadActionPlacement}).
  */
 export interface PluginThreadActionRegistration<Data = undefined> {
   /** Unique within the plugin; letters, digits, `-`, `_`. */
@@ -2104,6 +2123,8 @@ export interface PluginThreadActionRegistration<Data = undefined> {
    */
   group: string;
   order?: number;
+  /** Where the action shows; defaults to `"menu"`. */
+  placement?: PluginThreadActionPlacement;
   useData?(input: PluginThreadActionDataInput): Data;
   item(input: PluginThreadActionItemInput<Data>): PluginThreadAction | null;
   /**
@@ -2118,6 +2139,22 @@ export interface PluginThreadActionRegistration<Data = undefined> {
     input: PluginThreadActionBulkItemInput<Data>,
   ): PluginThreadAction | null;
 }
+
+/**
+ * Where a thread action shows.
+ *
+ * - `"menu"`: every thread actions menu and the quick-action picker.
+ * - `"header"`: only the open thread's header, as an outline button labelled
+ *   with the action's `label`, after the workspace's Open button. Several
+ *   header actions share one split button, the first as its main action. At
+ *   compact width and in narrow split panes the buttons fold into the
+ *   header's thread menu as rows at its top, after Open. `group` and `order`
+ *   sort header actions among themselves. Header actions never appear in
+ *   other menus, selection menus, `experimental_useThreadActions`, or the
+ *   quick-action picker, and an action that returns `choices` is left out
+ *   of the header.
+ */
+export type PluginThreadActionPlacement = "menu" | "header";
 
 /**
  * A thread action as {@link PluginSdkApp.experimental_useThreadActions}
@@ -3508,20 +3545,21 @@ export interface PluginAppSlots {
     registration: ExperimentalSidebarNavigationRegistration,
   ): void;
   /**
-   * Render a component in the thread header's action row (see
-   * {@link PluginThreadHeaderActionRegistration}). Experimental: see
-   * docs/api_to_audit.md.
-   */
-  experimental_threadHeaderAction(
-    registration: PluginThreadHeaderActionRegistration,
-  ): void;
-  /**
    * Add context beside an existing thread's composer (see
    * {@link ExperimentalThreadContextSegmentRegistration}). Experimental: see
    * docs/api_to_audit.md.
    */
   experimental_threadContextSegment(
     registration: ExperimentalThreadContextSegmentRegistration,
+  ): void;
+  /**
+   * Add a small item to the metadata line of every thread row in thread
+   * lists (see
+   * {@link ExperimentalThreadRowMetadataRegistration}). Experimental: see
+   * docs/api_to_audit.md.
+   */
+  experimental_threadRowMetadata<Data = undefined>(
+    registration: ExperimentalThreadRowMetadataRegistration<Data>,
   ): void;
   /**
    * Add a row to the thread Info tab's details block (see
@@ -4951,7 +4989,7 @@ export interface ExperimentalRpcQueryState<T> {
   isLoading: boolean;
   /** A read attempt is active, including background refreshes. Keyed consumers share this activity for their method; offline-paused reads are not fetching. */
   isFetching: boolean;
-  /** Force a read regardless of freshness and wait for its attempt/retries. Keyed reads refresh the method's subscribed keys. Failures update error and retain data; this promise resolves rather than rejecting. */
+  /** Force a read regardless of freshness and wait for its attempt/retries. Keyed reads refresh only this hook's keys, batched with other hooks refreshing in the same render. Failures update error and retain data; this promise resolves rather than rejecting. */
   refetch(): Promise<void>;
 }
 
@@ -5073,7 +5111,7 @@ export interface PluginSdkApp {
   >(
     options: ExperimentalRpcMutationOptions<Contract, Method>,
   ): ExperimentalRpcMutationState<Contract[Method]>;
-  /** Cache each key independently and batch missing or invalidated keys in the same render. */
+  /** Cache each key independently and batch missing or invalidated keys in the same render. Each key is watched once while the hook holds it, so a changing key list subscribes only added keys and releases only removed ones. */
   experimental_useRpcKeyedQuery<
     Contract extends PluginRpcContract,
     Method extends ExperimentalRpcKeyedMethod<Contract>,
@@ -5225,7 +5263,7 @@ export interface PluginSdkApp {
     environmentId: string,
   ) => Promise<void>;
   /**
-   * Every thread action for one thread, in menu order (see
+   * Every `"menu"` thread action for one thread, in menu order (see
    * {@link PluginThreadAction} for grouping): bb's own registrations first,
    * then plugins' in registration order. Registrations' `useData` hooks run
    * once for the app, so calling this per sidebar row costs one store
@@ -5237,8 +5275,9 @@ export interface PluginSdkApp {
     options?: PluginThreadActionsOptions,
   ): readonly PluginThreadActionEntry[];
   /**
-   * Every registered thread action with its static title and icon, in menu
-   * order and independent of any thread: what a quick-action picker lists.
+   * Every registered `"menu"` thread action with its static title and icon,
+   * in menu order and independent of any thread: what a quick-action picker
+   * lists.
    * Experimental: see docs/api_to_audit.md.
    */
   experimental_useThreadActionRegistrations(): readonly PluginThreadActionRegistrationInfo[];
@@ -5395,6 +5434,15 @@ export interface PluginSdkApp {
    * Experimental: see docs/api_to_audit.md.
    */
   experimental_ThreadStatusGlyph: ComponentType<PluginThreadStatusGlyphProps>;
+  /**
+   * Every `experimental_threadRowMetadata` contribution for one thread row (see
+   * {@link ExperimentalThreadRowMetadataRegistration}), the items bb's sidebar
+   * draws on its rows' metadata line. Render it under your row's title, in
+   * a flex parent as wide as the line. Badges such as a pull request's status then appear on your rows as they do on
+   * bb's. It renders nothing when no plugin contributes an item.
+   * Experimental: see docs/api_to_audit.md.
+   */
+  experimental_ThreadRowMetadata: ComponentType<ExperimentalThreadRowMetadataLineProps>;
   /**
    * bb's environment provider catalog (see
    * {@link PluginEnvironmentProvidersState}), the directory a thread's

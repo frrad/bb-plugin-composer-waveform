@@ -98,11 +98,11 @@ General. Machine-related keys (`machineServerUrl`, `defaultMachineAccess`,
   install with saved settings or work keeps false): when on, Enter steers a
   running thread and Command+Enter queues a follow-up; when off, those are
   reversed. Shift+Enter inserts a newline.
-- `showGitChanges` (default true; Settings → General → Show Git changes and
-  Commit button): false hides the git summary, expanded file list,
-  pull-request status and actions above the composer, and Commit action in the
-  thread header and overflow menu for every thread and connected client. Thread
-  relationships and workspace warnings remain visible.
+- Git changes above the composer, the Commit button (off by default) and the
+  pull request above the composer are plugin settings:
+  `bb plugin config bb--git set showGitChanges false`,
+  `bb plugin config bb--git set showCommitButton true` and
+  `bb plugin config bb--github-pr-status set showPullRequest false`.
 - `keepHistoryAfterContextClear` (default false; Settings → General → Show
   messages from before a context clear): true keeps a cleared thread's earlier
   messages above the `Context cleared` boundary in the timeline, outline, and
@@ -195,14 +195,18 @@ see `bb guide thread-messaging` for `--compact-first`.
 `sidebarMultiSelect` lets the built-in thread list sidebar select several threads with
 Cmd/Ctrl+Shift-click and Shift-click for bulk actions and drag; Cmd/Ctrl-click
 still opens a thread in a split.
+`threadRowMetadata` adds Organize → Rows → Metadata to the built-in thread list,
+a line under each thread title where plugins show details such as the pull
+request number.
 `unreadDividerAtAnswer` places the NEW divider of an unread thread before the
 final assistant message of a turn that finished while you were away, instead of
-before its first tool call.
+before its first tool call. It defaults on for early adopters.
 `websocketCompression` compresses large realtime messages (such as timeline
 pushes) on the app's live connection; it applies when the app reconnects.
 `bb settings general earlyAdopter on` (Settings → Experiments → Become an early
 adopter) turns on the experiments marked Early adopter, currently
-`applicationLinks`, `timelinePush`, `compactExpiredCache`, `sidebarMultiSelect`, and `websocketCompression`; an experiment you set yourself keeps
+`applicationLinks`, `timelinePush`, `compactExpiredCache`, `sidebarMultiSelect`,
+`unreadDividerAtAnswer`, and `websocketCompression`; an experiment you set yourself keeps
 your value.
 
 Launcher settings
@@ -239,9 +243,10 @@ bb settings keyboard reset [command] [--platform mac|windows|linux]
 `keyboard list` prints core command ids with their effective bindings, plus
 every saved override; examples include `panel.previousTab` / `panel.nextTab`,
 `pane.focus.left|right|up|down`, `pane.maximize.toggle`, and the initially
-unbound `panel.fullScreen.toggle`. `hints` (default true) shows or hides the
-delayed shortcut badges shown while holding the modifier key; shortcuts work
-either way.
+unbound `panel.fullScreen.toggle`. `terminal.find` applies while a terminal has
+focus: `Cmd+F` on macOS and `Ctrl+Shift+F` elsewhere, so Ctrl+letter keys keep
+reaching the shell. `hints` (default true) shows or hides the delayed shortcut
+badges shown while holding the modifier key; shortcuts work either way.
 
 `history.back` / `history.forward` (`Mod+[` / `Mod+]`) follow the pages opened
 in the current window, like the sidebar arrows. `thread.previous` /

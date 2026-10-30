@@ -128,6 +128,26 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
         experimental: true,
       },
       {
+        id: "thread-row-metadata",
+        title: "Thread row metadata",
+        summary:
+          "Add a small badge on the metadata line under each thread's title in the sidebar. With this, a plugin can:",
+        bullets: [
+          "Show per-thread state at a glance, like a pull request's number and its checks",
+          "Load every listed thread in one hook, so rows have their final height before they scroll in",
+          "Appear on plugin-built thread lists too, and on bb's rows once Metadata is turned on",
+        ],
+        apiSymbols: [
+          "ExperimentalThreadRowMetadataRegistration",
+          "ExperimentalThreadRowMetadataProps",
+          "ExperimentalThreadRowMetadataDataInput",
+          "experimental_ThreadRowMetadata",
+          "ExperimentalThreadRowMetadataLineProps",
+        ],
+        firstParty: ["GitHub PR Status"],
+        experimental: true,
+      },
+      {
         id: "thread-list",
         title: "The thread list",
         summary:
@@ -168,6 +188,7 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
           "PluginThreadTitleProps",
           "experimental_ThreadStatusGlyph",
           "PluginThreadStatusGlyphProps",
+          "experimental_ThreadRowMetadata",
           "useEnvironmentProviders",
           "PluginEnvironmentProvidersState",
           "useSdk",
@@ -204,17 +225,16 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
       },
       {
         id: "thread-header",
-        title: "Thread header controls",
+        title: "Thread header buttons",
         summary:
-          "Add a control to the header of an open thread. With this, a plugin can:",
+          'Add a button to the header of an open thread: a thread action with placement "header". With this, a plugin can:',
         bullets: [
-          "Show live state for the thread on screen, not just a static button",
-          "Sit in the same row as bb's own header controls",
+          "Show a labelled button after the workspace's Open button, only while it applies to the thread",
+          "Fold into the thread menu on phones and in narrow split panes",
+          "Load data only for the threads whose header is on screen",
         ],
-        apiSymbols: [
-          "PluginThreadHeaderActionRegistration",
-          "PluginThreadHeaderActionProps",
-        ],
+        apiSymbols: ["PluginThreadActionPlacement"],
+        firstParty: ["Git"],
         experimental: true,
       },
       {
@@ -445,7 +465,14 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
           "PluginThreadActionItemInput.experimental_panel",
           "PluginNewThreadPanelActionContext.experimental_panel",
         ],
-        firstParty: ["Docs", "Git", "GitHub", "Side chat", "Tasks", "Workflows"],
+        firstParty: [
+          "Docs",
+          "Git",
+          "GitHub",
+          "Side chat",
+          "Tasks",
+          "Workflows",
+        ],
       },
       {
         id: "file-opener",
@@ -1354,7 +1381,7 @@ export const SURFACE_GROUPS: SurfaceGroup[] = [
           "Test it against bb's conformance suite and recorded sessions, without a running bb",
         ],
         reference: [
-          "Use @get-bb/plugin-sdk/process for hostToolchain executable and environment discovery, or spawnHostProcess, forkHostProcess and execHostFile (all experimental_ exports). Core uses these same launch paths; ENOENT or exit 127 starts a background discovery refresh without replaying side effects, and launches never wait for discovery. Explicit cwd and env are preserved, Windows shims are quoted, and workers recover a replaced Node runtime only when its native-module ABI matches.",
+          "Use @get-bb/plugin-sdk/process for hostToolchain executable and environment discovery, or spawnHostProcess, forkHostProcess and execHostFile (all experimental_ exports). Core uses these same launch paths; ENOENT or exit 127 starts a background discovery refresh without replaying side effects, and launches never wait for discovery. Explicit cwd and env are preserved, Windows shims are quoted, and workers recover a replaced Node runtime only when its native-module ABI matches. Node launches that carry --use-env-proxy keep it only when the child's HTTP(S)_PROXY values are http(s) URLs, and then bypass the proxy for loopback.",
         ],
         apiSymbols: [
           "experimental_defineProviderBridge",

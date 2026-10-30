@@ -1,11 +1,14 @@
-bb's composer: the prompt box you type into in every thread, on the New thread screen, and when editing queued or sent messages.
+bb's composer with a rebindable voice-input shortcut. It is the prompt box you type into in every thread, on the New thread screen, and when editing queued or sent messages.
 
 ## What you get
 
 - Rich text with @-mention pills for files, folders, threads, sections and plugin items.
 - Slash commands and skills, prompt history on the up arrow, and pasted thread links that turn into thread pills.
 - Attachments by button, paste or drop, with image and video previews.
-- Voice input, the `+` menu, the send menu, and send, queue, steer and stop.
+- Voice input, including a rebindable **Toggle voice input** keyboard command
+  (Mod+D by default). Press it again to transcribe into the draft, or press
+  Enter while recording to transcribe and send. The `+` menu, the send menu,
+  and send, queue, steer and stop are included too.
 - Everything other plugins add to the composer: banners, actions, popups, menu entries, highlights and commands.
 
 ## How it works

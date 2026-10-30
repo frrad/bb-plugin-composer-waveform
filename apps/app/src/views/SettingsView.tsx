@@ -170,8 +170,6 @@ interface AppearanceSettingsSectionProps {
 }
 
 interface GeneralSettingsSectionProps {
-  showGitChanges: boolean;
-  onShowGitChangesChange: (enabled: boolean) => void;
   confirmThreadArchive: boolean;
   onConfirmThreadArchiveChange: (enabled: boolean) => void;
   keepHistoryAfterContextClear: boolean;
@@ -861,8 +859,6 @@ export function AppearanceSettingsSection({
 }
 
 export function GeneralSettingsSection({
-  showGitChanges,
-  onShowGitChangesChange,
   confirmThreadArchive,
   onConfirmThreadArchiveChange,
   keepHistoryAfterContextClear,
@@ -899,18 +895,6 @@ export function GeneralSettingsSection({
               checked={navigateToThreadAfterCreate}
               onCheckedChange={onNavigateToThreadAfterCreateChange}
               aria-label={NAVIGATE_TO_THREAD_AFTER_CREATE_SETTING_LABEL}
-            />
-          </SettingsWithControl>
-
-          <SettingsWithControl
-            label="Show Git changes and Commit button"
-            description="Show Git and PR controls above the composer, and Commit in the header."
-          >
-            <Switch
-              checked={showGitChanges}
-              disabled={generalSettingsDisabled}
-              onCheckedChange={onShowGitChangesChange}
-              aria-label="Show Git changes and Commit button"
             />
           </SettingsWithControl>
 
@@ -1164,6 +1148,11 @@ const EXPERIMENT_DEFINITIONS: Record<
     label: "Select multiple sidebar threads",
     description:
       "In the built-in thread list sidebar, Cmd/Ctrl+Shift-click and Shift-click threads to select several, right-click for bulk actions, and drag them together into a section, under a thread, into Pinned, or into a composer as mentions.",
+  },
+  threadRowMetadata: {
+    label: "Thread row metadata",
+    description:
+      "Add Metadata to the built-in thread list's Organize → Rows menu. When it is checked, plugins can show details such as a thread's pull request on a second line under its title.",
   },
   timelinePush: {
     label: "Pushed timeline updates",
@@ -1444,12 +1433,6 @@ export function SettingsView() {
     content = (
       <>
         <GeneralSettingsSection
-          showGitChanges={generalSettings.showGitChanges}
-          onShowGitChangesChange={(enabled) =>
-            updateGeneralSettingsMutation.mutate({
-              showGitChanges: enabled,
-            })
-          }
           confirmThreadArchive={generalSettings.confirmThreadArchive}
           onConfirmThreadArchiveChange={(enabled) =>
             updateGeneralSettingsMutation.mutate({
