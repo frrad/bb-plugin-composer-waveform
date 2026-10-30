@@ -4,18 +4,18 @@ import { mergeAttributes, Node, wrappingInputRule } from '@tiptap/core'
 import { handleBackspace } from './handleBackspace.js'
 
 export interface BlockquoteOptions {
-  
+
   HTMLAttributes: Record<string, any>
 }
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     blockQuote: {
-      
+
       setBlockquote: () => ReturnType
-      
+
       toggleBlockquote: () => ReturnType
-      
+
       unsetBlockquote: () => ReturnType
     }
   }
