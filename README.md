@@ -1,5 +1,10 @@
 # Composer voice shortcut for bb
 
+> **Deprecated.** This fork is superseded by
+> [frrad/bb-plugin-composer-voice](https://github.com/frrad/bb-plugin-composer-voice),
+> a standalone repo with the same plugin (`composer-waveform`) that targets
+> current bb releases. Use that instead.
+
 A fork of bb's Composer with a rebindable voice-input shortcut. **Mod+D**
 toggles recording; **Enter** while recording transcribes and sends.
 

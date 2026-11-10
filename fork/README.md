@@ -1,5 +1,10 @@
 # bb-plugin-composer-waveform
 
+> **Deprecated.** This repo is superseded by
+> [frrad/bb-plugin-composer-voice](https://github.com/frrad/bb-plugin-composer-voice),
+> a standalone repo with the same plugin (`composer-waveform`) that targets
+> current bb releases. Use that instead.
+
 A fork of [get-bb/bb](https://github.com/get-bb/bb) that adds a rebindable
 voice-input keyboard shortcut to bb's Composer.
 
